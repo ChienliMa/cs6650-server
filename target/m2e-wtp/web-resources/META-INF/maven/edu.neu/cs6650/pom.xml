@@ -32,5 +32,20 @@
   </dependencies>
   <build>
     <finalName>cs6650</finalName>
+    <plugins>
+    <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-war-plugin</artifactId>
+            <version>3.0.0</version>
+            <configuration>
+                <webResources>
+                    <resource>
+                        <directory>${project.basedir}/src/main/META-INF</directory>
+                        <targetPath>META-INF</targetPath>   
+                    </resource>
+                </webResources>
+            </configuration>
+        </plugin>
+</plugins>
   </build>
 </project>

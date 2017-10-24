@@ -1,0 +1,7 @@
+<Context path="/cs6650">
+  <Resource name="jdbc/cs6650hw2db" auth="Container" type="javax.sql.DataSource"
+               maxTotal="32" maxIdle="8" maxWaitMillis="10000"
+               username="root" password="WelcomeMa364~"
+               driverClassName="com.mysql.jdbc.Driver"
+               url="jdbc:mysql://cs6650hw21.cxmb9zqrnn2g.us-west-1.rds.amazonaws.com/Resort"/>
+</Context>
