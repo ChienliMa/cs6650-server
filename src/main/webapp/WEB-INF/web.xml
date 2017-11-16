@@ -20,7 +20,7 @@
 	
 	<servlet-mapping >
 		<servlet-name >HelloWorld Jersey Service </servlet-name >
-		<url-pattern >/assignment/* </url-pattern >
+		<url-pattern >/* </url-pattern >
 	</servlet-mapping >
 
  	<resource-ref>
