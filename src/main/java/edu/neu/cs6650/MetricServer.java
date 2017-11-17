@@ -1,22 +1,43 @@
 package edu.neu.cs6650;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+
+class Log {
+	private final String status;
+	private final Integer dbTime;
+	private final Integer totalTime;
+	
+	public Log(String status, Integer dbTime, Integer totalTime) {
+		super();
+		this.status = status;
+		this.dbTime = dbTime;
+		this.totalTime = totalTime;
+	}
+	
+	public String getStatus() {
+		return status;
+	}
+
+	public Integer getDbTime() {
+		return dbTime;
+	}
+
+	public Integer getTotalTime() {
+		return totalTime;
+	}
+}
+
 
 @Path("/metric")
 public class MetricServer {
@@ -25,76 +46,59 @@ public class MetricServer {
 	public String getMetric(
 						@QueryParam("startMillis") Long startMillis,
 						@QueryParam("endMillis") Long endMillis) {
-		List<String> logs = new ArrayList<String>();
-
+		// dump current log into db
+		Profiler.getInstance().dump();
 		
-		File cacheDir = new File("/tmp/CS6650Metrics");
-		for (File timeDir: cacheDir.listFiles()) {
-			long time = Long.parseLong(timeDir.getName());
-			if (time > startMillis &&  time++ < endMillis) {
-				for (File nodeLogs: timeDir.listFiles()) {
-					FileReader fileReader = null;
-					try {
-						fileReader = new FileReader(nodeLogs);
-						@SuppressWarnings("resource")
-						BufferedReader bufferedReader = new BufferedReader(fileReader);
-						String line;
-						while ((line = bufferedReader.readLine()) != null) logs.add(line);
-					} catch (IOException e) {
-						e.printStackTrace();
-					} finally {
-						if (fileReader != null)
-							try {
-								fileReader.close();
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-					}
-				}
+		// retrive logs nad
+		List<Log> logs = new ArrayList<Log>();
+		
+		Connection connection = null;
+		PreparedStatement statement = null;
+		ResultSet rs = null;
+		try {
+		    connection = (Connection) ConnectionPool.getConnection();
+		    statement = connection.prepareStatement("insert into Logs values (?,?,?,?)");
+		    statement.setTimestamp(1, new Timestamp(startMillis));
+		    statement.setTimestamp(2, new Timestamp(endMillis));
+		    rs = statement.executeQuery();
+		    while (rs.next()) {
+		    		logs.add(new Log(rs.getString(1), rs.getInt(1), rs.getInt(2)));
+		    }
+		}
+		catch (Exception e) {
+		    e.printStackTrace();
+		}
+		finally {
+			try {
+				if (rs != null) rs.close();
+				if (statement != null) statement.close();
+				if (connection != null) connection.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		};
+		}
+
 		return LogAnalyzer.analyze(logs, endMillis - startMillis);
 	}
-	
-	@POST
-	@Consumes(MediaType.TEXT_PLAIN)
-	public void postText(
-			@Context HttpServletRequest req,
-			@QueryParam("time") Long time) {
-		try {
-			String absPath = String.format("/tmp/CS6650Metrics/%d/%s", time, req.getRemoteAddr());
-			File logFile = new File(absPath);
-			logFile.createNewFile();
-			
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return;
-	}    
 }
 
 class LogAnalyzer {
-	public static String analyze(List<String> logs, long wallTime) {
+	public static String analyze(List<Log> logs, long wallTime) {
 		int errorCount = 0;
 		ArrayList<Integer> dbLatencies = new ArrayList<Integer>();
 		ArrayList<Integer> latencies = new ArrayList<Integer>();
-		for (String log:logs) {
-			String[] cols = log.split(",");
-			switch (cols[0]) {
+		for (Log log: logs) {
+			switch (log.getStatus()) {
 				case "ERROR":
+					errorCount += 1;
 					break;
 				case "SUCC":
-					dbLatencies.add(Integer.parseInt(cols[0]));
-					latencies.add(Integer.parseInt(cols[0]));
+					dbLatencies.add(log.getDbTime());
+					latencies.add(log.getTotalTime());
 					break;
 			}
 		}
-		
 		
 		Collections.sort(latencies);
 		Collections.sort(dbLatencies);

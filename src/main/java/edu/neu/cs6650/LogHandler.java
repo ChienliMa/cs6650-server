@@ -26,10 +26,8 @@ public class LogHandler {
 
 	}
 	
-	public Stirng loadLog(String node, Date time) {
+	public void loadLog(String node, Date time) {
 		File logFile = Paths.get(cacheDir.toString(), node, time.toString()).toFile();
-		FileOutputStream fileOutputStream = new FileOutputStream(logFile);
-		
 	}
 	
 //	// get all the log we have

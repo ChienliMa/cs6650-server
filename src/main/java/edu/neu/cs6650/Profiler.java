@@ -9,6 +9,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.naming.NamingException;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.SplittableRandom;
 
 
@@ -20,8 +27,6 @@ public class Profiler {
 	private  ConcurrentHashMap<Integer, List<String>> logger = new ConcurrentHashMap<Integer, List<String>>();;
 	
 	private  Date currDate;	
-	private  String monitorIP, monitorPort;
-
 	
 	public static Profiler getInstance() {
 		if (instance == null) {
@@ -30,15 +35,7 @@ public class Profiler {
 		return instance;
 	}
 	
-	public  void setMonitorIP(String monitorIP) {
-		monitorIP = monitorIP;
-	}
-
-	public  void setMonitorPort(String monitorPort) {
-		monitorPort = monitorPort;
-	}
-	
-	public  void log(Date time, String log) {
+	public void log(Date time, String log) {
 		if (!time.equals(currDate)) { dump(); }
 		
 		int key = randomGenerator.nextInt(nodeCount);
@@ -50,45 +47,58 @@ public class Profiler {
 		queue.add(log);
 	}
 
-	private  String getURL(Long time) {
-		return String.format("%s:%s/%s?time=%d", monitorIP,monitorPort,monitorURI, time);
-	}
-	
-	public  synchronized void dump() {
-		final ConcurrentHashMap<Integer, List<String>> oldLogger = logger;
-		final Date oldDate = currDate;
-		
+	public synchronized void dump() {
+		final ConcurrentHashMap<Integer, List<String>> logs = logger;
+		final Date date = currDate;
 		new Thread() {
 			public void run() {			
-				// Serialize logs and  
-				StringBuilder stringBuilder  = new StringBuilder();
-				for (Integer threadId: oldLogger.keySet()) {
-					for(String log: oldLogger.get(threadId)) {
-						stringBuilder.append(log);
-					}
-				}
-				
-				// post to monitor server
-				HttpURLConnection httpCon = null;
-				try {
-					URL url = new URL(getURL(oldDate.getTime()));
-					httpCon = (HttpURLConnection) url.openConnection();
-					httpCon.setDoOutput(true);
-					httpCon.setRequestMethod("PUT");
-					OutputStreamWriter out = new OutputStreamWriter(
-					    httpCon.getOutputStream());
-					out.write(stringBuilder.toString());
-					out.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} 
+				dumpLogIntoDB(logs, date); 
 			}
 		}.run();
 		
 		logger = new ConcurrentHashMap<Integer, List<String>>();
 		currDate = new Date();
 		return;
+	}
+	
+	public void dumpLogIntoDB(ConcurrentHashMap<Integer, List<String>>  logs, Date date) {
+	    Connection connection = null;
+	    PreparedStatement statement = null;
+	    try {
+	        connection = (Connection) ConnectionPool.getConnection();
+	        statement = connection.prepareStatement("insert into Logs values (?,?,?,?)");
+	        Timestamp timestamp = new Timestamp(date.getTime());
+			for (Integer threadId: logs.keySet()) {
+				for(String log: logs.get(threadId)) {
+					String[] cols = log.split(",");
+					statement.setString(1, cols[0]);
+					statement.setTimestamp(2,timestamp);
+					
+					if (cols[0] == "SUCC") {
+						statement.setInt(3, Integer.parseInt(cols[1]));
+						statement.setInt(4, Integer.parseInt(cols[2]));
+					} else {
+						statement.setInt(3, 0);
+						statement.setInt(4, 0);
+					}
+			        	statement.addBatch();
+				}
+			}
+	        statement.executeBatch();
+	    }
+	    catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    finally {
+			try {
+				if (statement != null) statement.close();
+				if (connection != null) connection.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	    }
+	    
 	}
 }
 
