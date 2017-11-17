@@ -27,11 +27,6 @@ import javax.net.ssl.HandshakeCompletedEvent;
 
 @Path("/resort")
 public class Hw2Server {
-	private BasicDataSource getDataSource() throws NamingException {
-		InitialContext ctx = new InitialContext();
-		return (BasicDataSource)ctx.lookup("java:comp/env/jdbc/cs6650hw2db");
-	}
-	
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)           
 	public String test() {
@@ -53,14 +48,12 @@ public class Hw2Server {
 				"	group by LiftRides.LiftID) as t" +
 				"	left join Lifts on t.id = Lifts.id);", skierID, dayNum);
 		
-		BasicDataSource ds = null;
 		Connection con = null;
 		Statement stmt = null;
 		ResultSet rs = null;
 		Integer rval = -1;
 		try {
-			ds = this.getDataSource();
-			con = ds.getConnection();
+			con = ConnectionPool.getConnection();
 			stmt = con.createStatement();
 			rs = stmt.executeQuery(query);
 			
@@ -100,8 +93,7 @@ public class Hw2Server {
 		Connection con = null;
 		Statement stmt = null;
 		try {
-			BasicDataSource ds = this.getDataSource();
-			con = ds.getConnection();
+			con = ConnectionPool.getConnection();
 			stmt = con.createStatement();
 			stmt.executeUpdate(query);
 		} catch (SQLException e) {
