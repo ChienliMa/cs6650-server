@@ -18,8 +18,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-@Path("/master")
-public class MasterServer {
+@Path("/metric")
+public class MetricServer {
 	@GET
 	@Path("/getMetric")
 	@Produces(MediaType.TEXT_PLAIN)           
