@@ -18,10 +18,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-@Path("/Monitor")
-public class MonitorServer {
+@Path("/master")
+public class MasterServer {
 	@GET
-	@Path("getMetric")
+	@Path("/getMetric")
 	@Produces(MediaType.TEXT_PLAIN)           
 	public String getMetric(
 						@QueryParam("startMillis") Long startMillis,
@@ -58,14 +58,8 @@ public class MonitorServer {
 		return LogAnalyzer.analyze(logs, endMillis - startMillis);
 	}
 	
-	@GET
-	@Path("purgeCache")
-	public void purgeCache(@QueryParam("startTime") Long time) {
-		return ;
-	}
-	
 	@POST
-	@Path("/Logs")
+	@Path("/logs")
 	@Consumes(MediaType.TEXT_PLAIN)
 	public void postText(
 			@Context HttpServletRequest req,

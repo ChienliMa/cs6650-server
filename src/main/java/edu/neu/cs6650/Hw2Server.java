@@ -25,13 +25,20 @@ import javax.naming.NamingException;
 import javax.net.ssl.HandshakeCompletedEvent;
 
 
-@Path("/hw2")
+@Path("/resort")
 public class Hw2Server {
 	private BasicDataSource getDataSource() throws NamingException {
 		InitialContext ctx = new InitialContext();
 		return (BasicDataSource)ctx.lookup("java:comp/env/jdbc/cs6650hw2db");
 	}
-
+	
+	@GET
+	@Produces(MediaType.TEXT_PLAIN)           
+	public String test() {
+		return "RESORT";
+	}
+	
+	
 	@GET
 	@Path("/myvert")
 	@Produces(MediaType.TEXT_PLAIN)           

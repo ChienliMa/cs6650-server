@@ -6,18 +6,11 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
-@Path("/")
+@Path("/slave")
 public class SlaveServer {
-	@PUT
 	@POST
-	@Path("/registerMonitor")
+	@Path("/registerMaster")
 	public void registerMonitor(@QueryParam("masterIp") String masterIp) {
 		ClusterInfoProvider.setMasterIp(masterIp);
-	}
-	
-	@GET
-	@Path("/dump")
-	public void dump() {
-		Profiler.dump();
 	}
 }
