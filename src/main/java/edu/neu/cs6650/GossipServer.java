@@ -20,7 +20,24 @@ public class GossipServer {
 		return buffer.toString();
 	}
 	
+
+	@GET
+	@Path("/logs")
+	public void getMetrics() {
+		// return requested log		
+	}
+	
+	@POST
+	@Path("/logs")
+	public void addMetrics() {
+		// write provider metric into slog
+		// return currrent file structure
+	}
+	
+	
+	
 	@DELETE
+	@Path("/nodes")
 	public String deleteNode(@QueryParam("ip") String ip) {
 		ClusterInfoProvider provider = ClusterInfoProvider.getInsteance(); 
 		provider.deleteNode(ip);
@@ -28,6 +45,7 @@ public class GossipServer {
 	}
 	
 	@POST
+	@Path("/nodes")
 	public String addNode(@QueryParam("ip") String ip) {
 		ClusterInfoProvider provider = ClusterInfoProvider.getInsteance(); 
 		provider.addNode(ip);
@@ -35,6 +53,7 @@ public class GossipServer {
 	}
 	
 	@GET
+	@Path("/nodes")
 	public String registerMonitor() {
 		return nodesToString(ClusterInfoProvider.getInsteance().getNodes());
 	}

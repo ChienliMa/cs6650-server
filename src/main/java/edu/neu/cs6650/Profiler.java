@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.KeyStore.PrivateKeyEntry;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -12,22 +13,32 @@ import java.util.SplittableRandom;
 
 
 public class Profiler {
-	private static ConcurrentHashMap<Integer, List<String>> logger = new ConcurrentHashMap<Integer, List<String>>();;
-	private static Date currDate;	
-	private static SplittableRandom randomGenerator = new SplittableRandom(222);
-	private static final int nodeCount = 100;
-	private static String monitorIP, monitorPort;
-	private static final String monitorURI = "/Logs";
+	private static Profiler instance = null;
 	
-	public static void setMonitorIP(String monitorIP) {
-		Profiler.monitorIP = monitorIP;
+	private  SplittableRandom randomGenerator = new SplittableRandom(222);
+	private  final int nodeCount = 100;
+	private  ConcurrentHashMap<Integer, List<String>> logger = new ConcurrentHashMap<Integer, List<String>>();;
+	
+	private  Date currDate;	
+	private  String monitorIP, monitorPort;
+
+	
+	public static Profiler getInstance() {
+		if (instance == null) {
+			instance = new Profiler();
+		}
+		return instance;
+	}
+	
+	public  void setMonitorIP(String monitorIP) {
+		monitorIP = monitorIP;
 	}
 
-	public static void setMonitorPort(String monitorPort) {
-		Profiler.monitorPort = monitorPort;
+	public  void setMonitorPort(String monitorPort) {
+		monitorPort = monitorPort;
 	}
 	
-	public static void log(Date time, String log) {
+	public  void log(Date time, String log) {
 		if (!time.equals(currDate)) { dump(); }
 		
 		int key = randomGenerator.nextInt(nodeCount);
@@ -39,11 +50,11 @@ public class Profiler {
 		queue.add(log);
 	}
 
-	private static String getURL(Long time) {
+	private  String getURL(Long time) {
 		return String.format("%s:%s/%s?time=%d", monitorIP,monitorPort,monitorURI, time);
 	}
 	
-	public static synchronized void dump() {
+	public  synchronized void dump() {
 		final ConcurrentHashMap<Integer, List<String>> oldLogger = logger;
 		final Date oldDate = currDate;
 		

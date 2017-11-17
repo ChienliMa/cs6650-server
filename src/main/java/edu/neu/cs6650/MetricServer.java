@@ -21,7 +21,6 @@ import javax.ws.rs.core.MediaType;
 @Path("/metric")
 public class MetricServer {
 	@GET
-	@Path("/getMetric")
 	@Produces(MediaType.TEXT_PLAIN)           
 	public String getMetric(
 						@QueryParam("startMillis") Long startMillis,
@@ -59,7 +58,6 @@ public class MetricServer {
 	}
 	
 	@POST
-	@Path("/logs")
 	@Consumes(MediaType.TEXT_PLAIN)
 	public void postText(
 			@Context HttpServletRequest req,
@@ -68,7 +66,7 @@ public class MetricServer {
 			String absPath = String.format("/tmp/CS6650Metrics/%d/%s", time, req.getRemoteAddr());
 			File logFile = new File(absPath);
 			logFile.createNewFile();
-			FileOutputStream fileOutputStream = new FileOutputStream(logFile);
+			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
