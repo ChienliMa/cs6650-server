@@ -1,16 +1,9 @@
 package edu.neu.cs6650;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.KeyStore.PrivateKeyEntry;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.naming.NamingException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -24,7 +17,7 @@ public class Profiler {
 	
 	private  SplittableRandom randomGenerator = new SplittableRandom(222);
 	private  final int nodeCount = 100;
-	private  ConcurrentHashMap<Integer, List<String>> logger = new ConcurrentHashMap<Integer, List<String>>();;
+	private  ConcurrentHashMap<Integer, List<Log>> logger = new ConcurrentHashMap<Integer, List<Log>>();;
 	
 	private  Date currDate;	
 	
@@ -35,20 +28,21 @@ public class Profiler {
 		return instance;
 	}
 	
-	public void log(Date time, String log) {
+	public void log( Log log) {
+		Date time = new Date(log.getTimeMillis());
 		if (!time.equals(currDate)) { dump(); }
 		
 		int key = randomGenerator.nextInt(nodeCount);
-		List<String> queue = logger.get(key);
+		List<Log> queue = logger.get(key);
 		if (queue == null) {
-			queue = new ArrayList<String>();
+			queue = new ArrayList<Log>();
 			logger.put(key, queue);
 		}
 		queue.add(log);
 	}
 
 	public synchronized void dump() {
-		final ConcurrentHashMap<Integer, List<String>> logs = logger;
+		final ConcurrentHashMap<Integer, List<Log>> logs = logger;
 		final Date date = currDate;
 		new Thread() {
 			public void run() {			
@@ -56,27 +50,25 @@ public class Profiler {
 			}
 		}.run();
 		
-		logger = new ConcurrentHashMap<Integer, List<String>>();
+		logger = new ConcurrentHashMap<Integer, List<Log>>();
 		currDate = new Date();
 		return;
 	}
 	
-	public void dumpLogIntoDB(ConcurrentHashMap<Integer, List<String>>  logs, Date date) {
+	public void dumpLogIntoDB(ConcurrentHashMap<Integer, List<Log>>  logs, Date date) {
 	    Connection connection = null;
 	    PreparedStatement statement = null;
 	    try {
 	        connection = (Connection) ConnectionPool.getConnection();
 	        statement = connection.prepareStatement("insert into Logs values (?,?,?,?)");
-	        Timestamp timestamp = new Timestamp(date.getTime());
 			for (Integer threadId: logs.keySet()) {
-				for(String log: logs.get(threadId)) {
-					String[] cols = log.split(",");
-					statement.setString(1, cols[0]);
-					statement.setTimestamp(2,timestamp);
+				for(Log log: logs.get(threadId)) {
+					statement.setString(1, log.getStatus());
+					statement.setTimestamp(2, new Timestamp(log.getTimeMillis()));
 					
-					if (cols[0] == "SUCC") {
-						statement.setInt(3, Integer.parseInt(cols[1]));
-						statement.setInt(4, Integer.parseInt(cols[2]));
+					if (log.getStatus() == "SUCC") {
+						statement.setInt(3, log.getDbTime());
+						statement.setInt(4, log.getTotalTime());
 					} else {
 						statement.setInt(3, 0);
 						statement.setInt(4, 0);

@@ -13,32 +13,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-class Log {
-	private final String status;
-	private final Integer dbTime;
-	private final Integer totalTime;
-	
-	public Log(String status, Integer dbTime, Integer totalTime) {
-		super();
-		this.status = status;
-		this.dbTime = dbTime;
-		this.totalTime = totalTime;
-	}
-	
-	public String getStatus() {
-		return status;
-	}
-
-	public Integer getDbTime() {
-		return dbTime;
-	}
-
-	public Integer getTotalTime() {
-		return totalTime;
-	}
-}
-
-
 @Path("/metric")
 public class MetricServer {
 	@GET
