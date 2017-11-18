@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.mysql.fabric.xmlrpc.base.Data;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -19,7 +21,7 @@ public class Profiler {
 	private  final int nodeCount = 100;
 	private  ConcurrentHashMap<Integer, List<Log>> logger = new ConcurrentHashMap<Integer, List<Log>>();;
 	
-	private  Date currDate;	
+	private  Date currDate = new Date();	
 	
 	public static Profiler getInstance() {
 		if (instance == null) {
@@ -67,8 +69,8 @@ public class Profiler {
 					statement.setTimestamp(2, new Timestamp(log.getTimeMillis()));
 					
 					if (log.getStatus() == "SUCC") {
-						statement.setInt(3, log.getDbTime());
-						statement.setInt(4, log.getTotalTime());
+						statement.setLong(3, log.getDbTime());
+						statement.setLong(4, log.getTotalTime());
 					} else {
 						statement.setInt(3, 0);
 						statement.setInt(4, 0);

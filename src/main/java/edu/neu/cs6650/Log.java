@@ -1,13 +1,19 @@
 package edu.neu.cs6650;
 
 public class Log {
-	private final String status;
-	private final Long timeMillis;
-	private final Integer dbTime;
-	private final Integer totalTime;
+	private  String status = null;
+	private  Long timeMillis  = null;
+	private  Long dbTime  = null;
+	private  Long totalTime  = null;
 	
-	public Log(String status, Long timeMillis, Integer dbTime, Integer totalTime) {
+	public Log(String status, Long timeMillis, Long dbTime, Long totalTime) {
 		this.timeMillis = timeMillis;
+		this.status = status;
+		this.dbTime = dbTime;
+		this.totalTime = totalTime;
+	}
+	
+	public Log(String status, Long dbTime, Long totalTime) {
 		this.status = status;
 		this.dbTime = dbTime;
 		this.totalTime = totalTime;
@@ -21,11 +27,11 @@ public class Log {
 		return status;
 	}
 
-	public Integer getDbTime() {
+	public Long getDbTime() {
 		return dbTime;
 	}
 
-	public Integer getTotalTime() {
+	public Long getTotalTime() {
 		return totalTime;
 	}
 }

@@ -22,17 +22,6 @@ import javax.naming.NamingException;
 
 @Path("resort")
 public class Hw2Server {
-	private BasicDataSource getDataSource() throws NamingException {
-		InitialContext ctx = new InitialContext();
-		return (BasicDataSource)ctx.lookup("java:comp/env/jdbc/cs6650");
-	}
-	
-	private Response ErrorHandler(Exception e) { 
-		Profiler.getInstance().log(new Log("ERROR", System.currentTimeMillis(), 0, 0));
-		return Response.status(500).entity(e.getMessage()).build();
-	}
-	
-	
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
 	public String simpleGet() {
@@ -44,7 +33,7 @@ public class Hw2Server {
 	@Produces(MediaType.TEXT_PLAIN)           
 	public Response getStatus(
 			@QueryParam("skierID") int skierID,
-			@QueryParam("dayNum") int dayNum) 
+			@QueryParam("dayNum") int dayNum) throws SQLException, NamingException 
 	{
 		Long serviceStart, serviceEnd, dbStart, dbEnd;
 		
@@ -56,16 +45,13 @@ public class Hw2Server {
 				"	group by LiftRides.LiftID) as t" +
 				"	left join Lifts on t.id = Lifts.id);", skierID, dayNum);
 		
-		BasicDataSource ds = null;
 		Connection con = null;
 		Statement stmt = null;
 		ResultSet rs = null;
 		Integer rval = -1;
 		try {
-			ds = this.getDataSource();
-			
 			dbStart = System.currentTimeMillis();
-			con = ds.getConnection();
+			con = ConnectionPool.getConnection();
 			stmt = con.createStatement();
 			rs = stmt.executeQuery(query);
 			dbEnd = System.currentTimeMillis();
@@ -73,11 +59,7 @@ public class Hw2Server {
 			if (rs.next()) {
 				rval = rs.getInt("TotalHeight");
 			}
-		} catch (SQLException e) {
-			return this.ErrorHandler(e);
-		} catch (NamingException e) {
-			return this.ErrorHandler(e);
-		}finally{
+		} finally{
 			try {
 				if(rs != null) rs.close();
 				if(stmt != null) stmt.close();
@@ -87,12 +69,12 @@ public class Hw2Server {
 			}
 			serviceEnd = System.currentTimeMillis();
 		}
-		
+
 		Profiler.getInstance()
-					.log(new Log("SUCC", System.currentTimeMillis(),
-									new Integer((int) (serviceEnd - serviceStart)), new Integer((int) (dbEnd - dbStart))));
+				.log(new Log("SUCC", System.currentTimeMillis(),
+						serviceEnd - serviceStart, dbEnd - dbStart));
 		// Generated loGenerated MessageBodyFactory () :
-		return Response.status(200).entity(rval).build();
+		return Response.status(200).entity(rval.toString()).build();
 	}
 	
 	@POST
@@ -103,7 +85,7 @@ public class Hw2Server {
 			@QueryParam("dayNum") int dayNum,
 			@QueryParam("timestamp") int timestamp,
 			@QueryParam("skierID") int skierID,
-			@QueryParam("liftID") int liftID) 
+			@QueryParam("liftID") int liftID) throws SQLException, NamingException 
 	{
 		Long serviceStart, serviceEnd, dbStart, dbEnd;
 		serviceStart =System.currentTimeMillis();
@@ -113,20 +95,14 @@ public class Hw2Server {
 		Connection con = null;
 		Statement stmt = null;
 		try {
-			BasicDataSource ds = this.getDataSource();
 			dbStart = System.currentTimeMillis();
 			
-			con = ds.getConnection();
+			con = ConnectionPool.getConnection();
 			stmt = con.createStatement();
 			stmt.executeUpdate(query);
 			
 			dbEnd = System.currentTimeMillis();
-
-		} catch (SQLException e) {
-			return this.ErrorHandler(e);
-		} catch (NamingException e) {
-			return this.ErrorHandler(e);
-		}finally{
+		} finally{
 			try {
 				if(stmt != null) stmt.close();
 				if(con != null) con.close();
@@ -138,7 +114,7 @@ public class Hw2Server {
 		
 		Profiler.getInstance()
 				.log(new Log("SUCC", System.currentTimeMillis(),
-						new Integer((int) (serviceEnd - serviceStart)), new Integer((int) (dbEnd - dbStart))));
+						serviceEnd - serviceStart, dbEnd - dbStart));
 		return Response.status(200).build();
     }         
 }

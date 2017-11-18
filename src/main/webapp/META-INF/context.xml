@@ -1,5 +1,5 @@
 <Context path="/cs6650">
-  <Resource name="jdbc/cs6650hw2db" auth="Container" type="javax.sql.DataSource"
+  <Resource name="jdbc/ResortDb" auth="Container" type="javax.sql.DataSource"
                maxTotal="32" maxIdle="8" maxWaitMillis="10000"
                username="root" password="cs6650root"
                driverClassName="com.mysql.jdbc.Driver"

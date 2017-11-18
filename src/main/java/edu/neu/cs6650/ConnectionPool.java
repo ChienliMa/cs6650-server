@@ -11,7 +11,7 @@ import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 public class ConnectionPool {
 	public static Connection getConnection() throws NamingException, SQLException {
 		InitialContext ctx = new InitialContext();
-		BasicDataSource dSource =  (BasicDataSource)ctx.lookup("java:comp/env/jdbc/cs6650hw2db");
+		BasicDataSource dSource =  (BasicDataSource)ctx.lookup("java:comp/env/jdbc/ResortDb");
 		return dSource.getConnection();
 	}
 	

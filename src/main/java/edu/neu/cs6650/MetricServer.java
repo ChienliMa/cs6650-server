@@ -36,7 +36,7 @@ public class MetricServer {
 		    statement.setTimestamp(2, new Timestamp(endMillis));
 		    rs = statement.executeQuery();
 		    while (rs.next()) {
-		    		logs.add(new Log(rs.getString(1), rs.getInt(1), rs.getInt(2)));
+		    		logs.add(new Log(rs.getString(1), rs.getLong(3), rs.getLong(4)));
 		    }
 		}
 		catch (Exception e) {
@@ -60,8 +60,8 @@ public class MetricServer {
 class LogAnalyzer {
 	public static String analyze(List<Log> logs, long wallTime) {
 		int errorCount = 0;
-		ArrayList<Integer> dbLatencies = new ArrayList<Integer>();
-		ArrayList<Integer> latencies = new ArrayList<Integer>();
+		ArrayList<Long> dbLatencies = new ArrayList<Long>();
+		ArrayList<Long> latencies = new ArrayList<Long>();
 		for (Log log: logs) {
 			switch (log.getStatus()) {
 				case "ERROR":
@@ -84,14 +84,14 @@ class LogAnalyzer {
 		stringBuilder.append(String.format("successful req throughput: %d req/s\n", latencies.size()*1000/wallTime));
 		
 		long totalTime = 0;
-		for (int latency: latencies) totalTime += latency;
+		for (Long latency: latencies) totalTime += latency;
 		stringBuilder.append(String.format("service mean: %d ms\n", totalTime/latencies.size()));
 		stringBuilder.append(String.format("service mdian: %d ms\n", latencies.get(latencies.size()/2)));
 		stringBuilder.append(String.format("service 95th percentile: %d ms\n", latencies.get((int) (latencies.size()*0.95))));
 		stringBuilder.append(String.format("service 99th percentile: %d ms\n", latencies.get((int) (latencies.size()*0.99))));
 		
 		totalTime = 0;
-		for (int latency: dbLatencies) totalTime += latency;
+		for (Long latency: dbLatencies) totalTime += latency;
 		stringBuilder.append(String.format("db mean: %d ms\n", totalTime/dbLatencies.size()));
 		stringBuilder.append(String.format("db mdian: %d ms\n", dbLatencies.get(dbLatencies.size()/2)));
 		stringBuilder.append(String.format("db 95th percentile: %d ms\n", dbLatencies.get((int) (dbLatencies.size()*0.95))));
