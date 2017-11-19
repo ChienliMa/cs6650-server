@@ -33,7 +33,7 @@ public class Hw2Server {
 	@Produces(MediaType.TEXT_PLAIN)           
 	public Response getStatus(
 			@QueryParam("skierID") int skierID,
-			@QueryParam("dayNum") int dayNum) throws SQLException, NamingException 
+			@QueryParam("dayNum") int dayNum)
 	{
 		Long serviceStart, serviceEnd, dbStart, dbEnd;
 		
@@ -54,11 +54,17 @@ public class Hw2Server {
 			con = ConnectionPool.getConnection();
 			stmt = con.createStatement();
 			rs = stmt.executeQuery(query);
-			dbEnd = System.currentTimeMillis();
-			
 			if (rs.next()) {
 				rval = rs.getInt("TotalHeight");
 			}
+			dbEnd = System.currentTimeMillis();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			Monitor.getInstance().log(new Log("ERROR", System.currentTimeMillis(), 0l, 0l));
+			return Response.status(500).entity(e.getMessage()).build();
+		} catch (NamingException e) {
+			Monitor.getInstance().log(new Log("ERROR", System.currentTimeMillis(), 0l, 0l));
+			return Response.status(500).entity(e.getMessage()).build();
 		} finally{
 			try {
 				if(rs != null) rs.close();
@@ -67,10 +73,10 @@ public class Hw2Server {
 			} catch (SQLException e) {
 				System.out.println(e.toString());
 			}
-			serviceEnd = System.currentTimeMillis();
 		}
 
-		Profiler.getInstance()
+		serviceEnd = System.currentTimeMillis();
+		Monitor.getInstance()
 				.log(new Log("SUCC", System.currentTimeMillis(),
 						serviceEnd - serviceStart, dbEnd - dbStart));
 		// Generated loGenerated MessageBodyFactory () :
@@ -85,7 +91,7 @@ public class Hw2Server {
 			@QueryParam("dayNum") int dayNum,
 			@QueryParam("timestamp") int timestamp,
 			@QueryParam("skierID") int skierID,
-			@QueryParam("liftID") int liftID) throws SQLException, NamingException 
+			@QueryParam("liftID") int liftID)
 	{
 		Long serviceStart, serviceEnd, dbStart, dbEnd;
 		serviceStart =System.currentTimeMillis();
@@ -100,8 +106,13 @@ public class Hw2Server {
 			con = ConnectionPool.getConnection();
 			stmt = con.createStatement();
 			stmt.executeUpdate(query);
-			
 			dbEnd = System.currentTimeMillis();
+		} catch (SQLException e) {
+			Monitor.getInstance().log(new Log("ERROR", System.currentTimeMillis(), 0l, 0l));
+			return Response.status(500).entity(e.getMessage()).build();
+		} catch (NamingException e) {
+			Monitor.getInstance().log(new Log("ERROR", System.currentTimeMillis(), 0l, 0l));
+			return Response.status(500).entity(e.getMessage()).build();
 		} finally{
 			try {
 				if(stmt != null) stmt.close();
@@ -109,10 +120,9 @@ public class Hw2Server {
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-			serviceEnd = System.currentTimeMillis();
 		}
-		
-		Profiler.getInstance()
+		serviceEnd = System.currentTimeMillis();
+		Monitor.getInstance()
 				.log(new Log("SUCC", System.currentTimeMillis(),
 						serviceEnd - serviceStart, dbEnd - dbStart));
 		return Response.status(200).build();
