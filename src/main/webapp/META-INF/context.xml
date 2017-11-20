@@ -1,7 +1,7 @@
 <Context path="/cs6650">
   <Resource name="jdbc/ResortDb" auth="Container" type="javax.sql.DataSource"
-               maxTotal="32" maxIdle="8" maxWaitMillis="10000"
+               maxTotal="64" maxIdle="20" maxWaitMillis="20000"
                username="root" password="cs6650root"
                driverClassName="com.mysql.jdbc.Driver"
-               url="jdbc:mysql://cs6650.cxmb9zqrnn2g.us-west-1.rds.amazonaws.com/Resort"/>
+               url="jdbc:mysql://cs6650.cxmb9zqrnn2g.us-west-1.rds.amazonaws.com/Resort?rewriteBatchStatements=true"/>
 </Context>

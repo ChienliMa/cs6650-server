@@ -7,16 +7,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
-
 import javax.ws.rs.QueryParam;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
+import java.security.Provider.Service;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Date;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 
@@ -26,6 +21,13 @@ public class Hw2Server {
 	@Produces(MediaType.TEXT_PLAIN)
 	public String simpleGet() {
 		return "ddd";
+	}
+	
+	private Response errorHanlder(Exception e) {
+		System.out.println("Service fail");
+		System.out.println(e.getMessage());
+		LogDao.getInstance().inserytLog(new Log("ERROR", 0l, 0l));
+		return Response.status(500).entity(e.getMessage()).build();
 	}
 	
 	@GET
@@ -38,47 +40,19 @@ public class Hw2Server {
 		Long serviceStart, serviceEnd, dbStart, dbEnd;
 		
 		serviceStart = System.currentTimeMillis();
-		String query = String.format("select sum(CNT * height) as TotalHeight" +
-				"	 from ((select LiftRides.LiftID as id, count(*) as CNT" +
-				"    from LiftRides" +
-				"	where LiftRides.SkierID = %d and LiftRides.Day = %d" +
-				"	group by LiftRides.LiftID) as t" +
-				"	left join Lifts on t.id = Lifts.id);", skierID, dayNum);
-		
-		Connection con = null;
-		Statement stmt = null;
-		ResultSet rs = null;
 		Integer rval = -1;
 		try {
 			dbStart = System.currentTimeMillis();
-			con = ConnectionPool.getConnection();
-			stmt = con.createStatement();
-			rs = stmt.executeQuery(query);
-			if (rs.next()) {
-				rval = rs.getInt("TotalHeight");
-			}
+			rval = LiftRidesDAO.getInstance().getVert(skierID, dayNum);
 			dbEnd = System.currentTimeMillis();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			Monitor.getInstance().log(new Log("ERROR", System.currentTimeMillis(), 0l, 0l));
-			return Response.status(500).entity(e.getMessage()).build();
+			return errorHanlder(e);
 		} catch (NamingException e) {
-			Monitor.getInstance().log(new Log("ERROR", System.currentTimeMillis(), 0l, 0l));
-			return Response.status(500).entity(e.getMessage()).build();
-		} finally{
-			try {
-				if(rs != null) rs.close();
-				if(stmt != null) stmt.close();
-				if(con != null) con.close();
-			} catch (SQLException e) {
-				System.out.println(e.toString());
-			}
+			return errorHanlder(e);
 		}
 
 		serviceEnd = System.currentTimeMillis();
-		Monitor.getInstance()
-				.log(new Log("SUCC", System.currentTimeMillis(),
-						serviceEnd - serviceStart, dbEnd - dbStart));
+		LogDao.getInstance().inserytLog(new Log("SUCC", serviceEnd - serviceStart, dbEnd - dbStart));
 		// Generated loGenerated MessageBodyFactory () :
 		return Response.status(200).entity(rval.toString()).build();
 	}
@@ -95,36 +69,20 @@ public class Hw2Server {
 	{
 		Long serviceStart, serviceEnd, dbStart, dbEnd;
 		serviceStart =System.currentTimeMillis();
-		String query = String.format("insert into LiftRides (ResortID, Day, SkierID, LiftID, Time) " +
-				" value(%d, %d, %d, %d, %d);", resortID, dayNum, skierID, liftID, timestamp);
-
-		Connection con = null;
-		Statement stmt = null;
+		LiftRides liftRide = new LiftRides(resortID, skierID, liftID, dayNum, timestamp);
+		
 		try {
 			dbStart = System.currentTimeMillis();
-			
-			con = ConnectionPool.getConnection();
-			stmt = con.createStatement();
-			stmt.executeUpdate(query);
+			LiftRidesDAO.getInstance().insertLiftRide(liftRide);
 			dbEnd = System.currentTimeMillis();
 		} catch (SQLException e) {
-			Monitor.getInstance().log(new Log("ERROR", System.currentTimeMillis(), 0l, 0l));
-			return Response.status(500).entity(e.getMessage()).build();
+			return errorHanlder(e);
 		} catch (NamingException e) {
-			Monitor.getInstance().log(new Log("ERROR", System.currentTimeMillis(), 0l, 0l));
-			return Response.status(500).entity(e.getMessage()).build();
-		} finally{
-			try {
-				if(stmt != null) stmt.close();
-				if(con != null) con.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
+			return errorHanlder(e);
+		} 
+		
 		serviceEnd = System.currentTimeMillis();
-		Monitor.getInstance()
-				.log(new Log("SUCC", System.currentTimeMillis(),
-						serviceEnd - serviceStart, dbEnd - dbStart));
+		LogDao.getInstance().inserytLog(new Log("SUCC", serviceEnd - serviceStart, dbEnd - dbStart));
 		return Response.status(200).build();
     }         
 }
